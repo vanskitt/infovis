@@ -1,23 +1,645 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>trabajo-practico-datos-personales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Spotify Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f0ff;
+      --surface: #ede5ff;
+      --border: #d4c4f0;
+      --accent: #9b6fd4;
+      --accent2: #e8a0c8;
+      --text: #2d1f4a;
+      --muted: #9b8dbb;
+      --card-bg: #faf7ff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.15;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      padding: 80px 60px 60px;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      background: linear-gradient(135deg, #ede5ff 0%, #fce8f5 100%);
+    }
+
+    header::after {
+      content: '♪';
+      position: absolute;
+      right: -20px;
+      top: -40px;
+      font-size: 320px;
+      color: var(--border);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .header-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-label::before {
+      content: '';
+      display: inline-block;
+      width: 32px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    h1.main-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 9vw, 120px);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+
+    h1.main-title span {
+      color: var(--accent);
+    }
+
+    .header-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--muted);
+      margin-top: 16px;
+    }
+
+    /* ── NAV PILLS ── */
+    nav {
+      padding: 24px 60px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: var(--surface);
+    }
+
+    nav a {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(200, 245, 66, 0.04);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px 120px;
+    }
+
+    /* ── DATA PROCESSING SECTION ── */
+    .process-section {
+      margin-top: 64px;
+      margin-bottom: 0;
+      padding: 40px 48px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .process-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #b48de0, #e8a0c8);
+    }
+
+    .process-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .process-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .process-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .process-intro {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 680px;
+      margin-bottom: 32px;
+    }
+
+    .process-intro em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .process-steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 680px) {
+      .process-steps { grid-template-columns: 1fr; }
+    }
+
+    .process-step {
+      display: flex;
+      gap: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 22px;
+    }
+
+    .step-icon {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      line-height: 1;
+      color: var(--border);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .step-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .step-desc strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .step-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .step-stats span {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 4px 10px;
+    }
+
+    .stat-num {
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    .process-result {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .process-result strong {
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    /* ── SECTION ── */
+    .viz-section {
+      margin-top: 100px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.7s ease forwards;
+    }
+
+    .viz-section:nth-child(1) { animation-delay: 0.1s; }
+    .viz-section:nth-child(2) { animation-delay: 0.2s; }
+    .viz-section:nth-child(3) { animation-delay: 0.3s; }
+    .viz-section:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 24px;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 80px;
+      line-height: 0.85;
+      color: var(--border);
+      user-select: none;
+    }
+
+    .section-text {}
+
+    .section-question {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(22px, 3vw, 36px);
+      font-weight: 300;
+      line-height: 1.25;
+      color: var(--text);
+      max-width: 680px;
+      margin-bottom: 10px;
+    }
+
+    .section-question em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .section-tool {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .section-tool::before {
+      content: '◆';
+      color: var(--accent2);
+      font-size: 7px;
+    }
+
+    /* ── VIZ CARD ── */
+    .viz-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .viz-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #b48de0, #e8a0c8);
+    }
+
+    .viz-inner {
+      padding: 40px;
+    }
+
+    /* ── SVG / EMBED ── */
+    .viz-card object {
+      display: block;
+      width: 100%;
+      min-height: 480px;
+      border: none;
+    }
+
+    /* Flourish and Datawrapper */
+    .flourish-embed,
+    [id^="datawrapper-vis"] {
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    /* Tableau */
+    .tableauPlaceholder {
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-brand {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── WAVEFORM DECORATION ── */
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 20px;
+    }
+
+    .waveform span {
+      display: block;
+      width: 2px;
+      background: var(--accent);
+      border-radius: 1px;
+      animation: wave 1.4s ease-in-out infinite;
+    }
+
+    .waveform span:nth-child(1) { height: 6px;  animation-delay: 0s; }
+    .waveform span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+    .waveform span:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+    .waveform span:nth-child(4) { height: 10px; animation-delay: 0.3s; }
+    .waveform span:nth-child(5) { height: 16px; animation-delay: 0.15s; }
+    .waveform span:nth-child(6) { height: 8px;  animation-delay: 0.25s; }
+    .waveform span:nth-child(7) { height: 18px; animation-delay: 0.05s; }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.3); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      header { padding: 48px 24px 40px; }
+      nav { padding: 16px 24px; }
+      main { padding: 0 20px 80px; }
+      .section-header { grid-template-columns: 1fr; }
+      .section-number { font-size: 48px; }
+      .viz-inner { padding: 20px; }
+      footer { padding: 32px 24px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>¿A qué artistas escuché y a qué nacionalidad pertenecen?</h1>
-  <h1>Visualización hecha con RAWGRAPHS 2.0</h1>
-  <object type="image/svg+xml" data="./voronoi.svg"></object>
 
-  <h1>¿Cuántas reproducciones tengo por artista y de qué lugares del mundo provienen?</h1>
-  <h1>Visualización hecha con Flourish</h1>
-  <div class="flourish-embed flourish-map" data-src="visualisation/28886329"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/28886329/thumbnail" width="100%" alt="map visualization" /></noscript></div>
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-label">My Spotify Data</div>
+    <h1 class="main-title">My<br><span>Music</span><br>Listening</h1>
+    <p class="header-sub">Spoiler alert: Taylor Swift owns my brain.</p>
+  </header>
 
-  <h1>¿Cuáles son mis diez artistas más escuchados y cuántos minutos los escuché?</h1>
-  <h1>Visualización hecha con Datawrapper</h1>
-  <div style="min-height:305px" id="datawrapper-vis-obieN"><script type="text/javascript" defer src="https://datawrapper.dwcdn.net/obieN/embed.js" charset="utf-8" data-target="#datawrapper-vis-obieN"></script><noscript><img src="https://datawrapper.dwcdn.net/obieN/full.png" alt="Top 10 most streamed artists (Bar Chart)" /></noscript></div>
+  <!-- ── NAV ── -->
+  <nav>
+    <a href="#viz1">Nationalities</a>
+    <a href="#viz2">Plays</a>
+    <a href="#viz3">Top Artists</a>
+    <a href="#viz4">Schedules</a>
+  </nav>
 
-  <h1>¿En qué horarios y en qué días de la semana escuché música?</h1>
-  <h1>Visualización hecha con Tableau</h1>
-  <div class='tableauPlaceholder' id='viz1778260041856' style='position: relative'><noscript><a href='#'><img alt='Listening Activity by Day of Week and Hour ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;li&#47;listeningactivitybydayofweekandhour&#47;Hoja1&#47;1_rss.png' style='border: none' /></a></noscript><object class='tableauViz'  style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> <param name='embed_code_version' value='3' /> <param name='site_root' value='' /><param name='name' value='listeningactivitybydayofweekandhour&#47;Hoja1' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;li&#47;listeningactivitybydayofweekandhour&#47;Hoja1&#47;1.png' /> <param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='es-ES' /><param name='filter' value='publish=yes' /></object></div>                <script type='text/javascript'>                    var divElement = document.getElementById('viz1778260041856');                    var vizElement = divElement.getElementsByTagName('object')[0];                    vizElement.style.width='100%';vizElement.style.height=(divElement.offsetWidth*0.75)+'px';                    var scriptElement = document.createElement('script');                    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    vizElement.parentNode.insertBefore(scriptElement, vizElement);                </script>
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- DATA PROCESSING NOTE -->
+    <section class="process-section">
+      <div class="process-header">
+        <div class="process-label">Data Processing</div>
+        <h2 class="process-title">How I cleaned the dataset</h2>
+      </div>
+      <p class="process-intro">
+        The raw data was exported directly from Spotify and covers the <em>last 7 months</em> of listening history.
+        Before building the visualizations, two filters were applied to reduce noise:
+      </p>
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="step-icon">01</div>
+          <div class="step-body">
+            <div class="step-title">Remove short plays</div>
+            <p class="step-desc">Entries with less than <strong>0.5 minutes</strong> played were removed — these are skipped tracks that don't represent real listening.</p>
+            <div class="step-stats">
+              <span><span class="stat-num">−293</span> records removed</span>
+              <span><span class="stat-num">1,879</span> → <span class="stat-num">1,586</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="step-icon">02</div>
+          <div class="step-body">
+            <div class="step-title">Keep only recurring artists</div>
+            <p class="step-desc">Artists played <strong>5 times or fewer</strong> were excluded, keeping only those with a meaningful presence in my listening history.</p>
+            <div class="step-stats">
+              <span><span class="stat-num">−48</span> artists removed</span>
+              <span><span class="stat-num">1,586</span> → <span class="stat-num">1,495</span> records</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="process-result">
+        After both filters: <strong>1,495 records</strong> across <strong>16 artists</strong>.
+      </div>
+    </section>
+
+    <!-- 1. VORONOI -->
+    <section class="viz-section" id="viz1">
+      <div class="section-header">
+        <div class="section-number">01</div>
+        <div class="section-text">
+          <h2 class="section-question">Which artists did I listen to and what <em>nationality</em> do they belong to?</h2>
+          <div class="section-tool">Visualization made with RAWGraphs 2.0</div>
+        </div>
+        <div class="waveform">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="viz-card">
+        <div class="viz-inner">
+          <object type="image/svg+xml" data="./voronoi.svg"></object>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MAPA FLOURISH -->
+    <section class="viz-section" id="viz2">
+      <div class="section-header">
+        <div class="section-number">02</div>
+        <div class="section-text">
+          <h2 class="section-question">How many plays do I have per artist and what <em>parts of the world</em> do they come from?</h2>
+          <div class="section-tool">Visualization made with Flourish</div>
+        </div>
+        <div class="waveform">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="viz-card">
+        <div class="viz-inner">
+          <div class="flourish-embed flourish-map" data-src="visualisation/28886329">
+            <script src="https://public.flourish.studio/resources/embed.js"></script>
+            <noscript><img src="https://public.flourish.studio/visualisation/28886329/thumbnail" width="100%" alt="map visualization" /></noscript>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. DATAWRAPPER -->
+    <section class="viz-section" id="viz3">
+      <div class="section-header">
+        <div class="section-number">03</div>
+        <div class="section-text">
+          <h2 class="section-question">Who are my <em>top ten</em> most listened artists and how many minutes did I play them?</h2>
+          <div class="section-tool">Visualization made with Datawrapper</div>
+        </div>
+        <div class="waveform">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="viz-card">
+        <div class="viz-inner">
+          <div style="min-height:305px" id="datawrapper-vis-obieN">
+            <script type="text/javascript" defer src="https://datawrapper.dwcdn.net/obieN/embed.js" charset="utf-8" data-target="#datawrapper-vis-obieN"></script>
+            <noscript><img src="https://datawrapper.dwcdn.net/obieN/full.png" alt="Top 10 most streamed artists (Bar Chart)" /></noscript>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. TABLEAU -->
+    <section class="viz-section" id="viz4">
+      <div class="section-header">
+        <div class="section-number">04</div>
+        <div class="section-text">
+          <h2 class="section-question">At what <em>times of day</em> and on which days of the week did I listen to music?</h2>
+          <div class="section-tool">Visualization made with Tableau</div>
+        </div>
+        <div class="waveform">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="viz-card">
+        <div class="viz-inner">
+          <div class='tableauPlaceholder' id='viz1778260041856' style='position: relative'>
+            <noscript>
+              <a href='#'><img alt='Listening Activity by Day of Week and Hour' src='https://public.tableau.com/static/images/li/listeningactivitybydayofweekandhour/Hoja1/1_rss.png' style='border: none' /></a>
+            </noscript>
+            <object class='tableauViz' style='display:none;'>
+              <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+              <param name='embed_code_version' value='3' />
+              <param name='site_root' value='' />
+              <param name='name' value='listeningactivitybydayofweekandhour/Hoja1' />
+              <param name='tabs' value='no' />
+              <param name='toolbar' value='yes' />
+              <param name='static_image' value='https://public.tableau.com/static/images/li/listeningactivitybydayofweekandhour/Hoja1/1.png' />
+              <param name='animate_transition' value='yes' />
+              <param name='display_static_image' value='yes' />
+              <param name='display_spinner' value='yes' />
+              <param name='display_overlay' value='yes' />
+              <param name='display_count' value='yes' />
+              <param name='language' value='es-ES' />
+              <param name='filter' value='publish=yes' />
+            </object>
+          </div>
+          <script type='text/javascript'>
+            var divElement = document.getElementById('viz1778260041856');
+            var vizElement = divElement.getElementsByTagName('object')[0];
+            vizElement.style.width = '100%';
+            vizElement.style.height = (divElement.offsetWidth * 0.75) + 'px';
+            var scriptElement = document.createElement('script');
+            scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+            vizElement.parentNode.insertBefore(scriptElement, vizElement);
+          </script>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-brand">My Spotify Data</div>
+    <div class="footer-note">Music Analysis</div>
+  </footer>
+
+</body>
+</html>
